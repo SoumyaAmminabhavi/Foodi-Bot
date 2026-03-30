@@ -1,0 +1,68 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Category {
+  id      Int    @id @default(autoincrement())
+  name    String
+  emoji   String
+  dishes  Dish[]
+}
+
+model Dish {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String
+  price       Int      // in paise (₹ * 100)
+  emoji       String
+  tags        String   // comma-separated: "veg,spicy,popular"
+  available   Boolean  @default(true)
+  categoryId  Int
+  category    Category @relation(fields: [categoryId], references: [id])
+  orderItems  OrderItem[]
+  createdAt   DateTime @default(now())
+}
+
+model Order {
+  id         Int         @id @default(autoincrement())
+  status     String      @default("CONFIRMED") // CONFIRMED | PREPARING | READY | ON_WAY | DELIVERED
+  total      Int         // in paise
+  items      OrderItem[]
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+}
+
+model OrderItem {
+  id       Int   @id @default(autoincrement())
+  orderId  Int
+  dishId   Int
+  quantity Int   @default(1)
+  order    Order @relation(fields: [orderId], references: [id])
+  dish     Dish  @relation(fields: [dishId], references: [id])
+}
+
+model ChatMessage {
+  id        Int      @id @default(autoincrement())
+  role      String   // "user" | "bot"
+  content   String
+  userId    Int?
+  user      User?    @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model User {
+  id        Int           @id @default(autoincrement())
+  name      String
+  email     String        @unique
+  password  String
+  chatMessages ChatMessage[]
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+}
+
