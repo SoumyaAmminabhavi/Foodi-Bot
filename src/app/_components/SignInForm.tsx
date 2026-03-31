@@ -111,10 +111,10 @@ export function SignInForm() {
         </p>
       </div>
 
-      <div className="mt-4 rounded-lg border border-[var(--border)] bg-[var(--card)] p-4 text-center text-xs text-[var(--muted)]">
+      {/* <div className="mt-4 rounded-lg border border-[var(--border)] bg-[var(--card)] p-4 text-center text-xs text-[var(--muted)]">
         <p>Demo: use email <code>test@example.com</code></p>
         <p>password: <code>password123</code></p>
-      </div>
+      </div> */}
     </div>
   );
 }
