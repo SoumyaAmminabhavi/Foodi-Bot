@@ -125,56 +125,48 @@ export const chatRouter = createTRPCRouter({
         });
         replyText =
           "👑 Our **Chicken Biryani** is legendary — slow dum-cooked with whole spices & saffron. A must-try!";
-      } else if (matchesIntent(txt, [/thank|bye|great|awesome|perfect|good/])) {
+      } else if (matchesIntent(txt, [/\b(thank|thanks|bye|goodbye|great|awesome|perfect)\b/])) {
         intent = "farewell";
         replyText =
           "😊 Anytime! Enjoy your meal — we'll get it to you piping hot. Bon appétit! 🍽️";
       } else {
         intent = "fallback";
 
-        // Reply to random text too (all inputs get a response)
-        if (/\?|\bdoubt\b|\bhow\b|\bwhat\b|\bwhy\b|\bcan\b/i.test(input.message)) {
-          replyText =
-            "🤔 I can answer questions about the menu, ordering, or tracking your order.\n\n" +
-            "Try: 'What are today’s specials?', 'How do I place an order?', or 'Where is my order #7?';\n" +
-            "I’m here to help with your doubt!";
-        } else {
-          if (groq) {
-            try {
-              const response = await groq.chat.completions.create({
-                model: "mixtral-8x7b-32768",
-                messages: [
-                  {
-                    role: "system",
-                    content: "You are a friendly food-ordering assistant. Answer the user's question in one or two sentences, then offer to show menu options.",
-                  },
-                  {
-                    role: "user",
-                    content: input.message,
-                  },
-                ],
-                max_tokens: 256,
-              });
-              replyText =
-                response.choices[0]?.message?.content ||
-                "💬 I'm ready to help with your food orders and menu options!";
-            } catch (e) {
-              replyText =
-                "💬 Got it! I’m still learning, but I can help with ordering and tracking. Here are some favourites to get you started:";
-            }
-
-            dishes = await ctx.db.dish.findMany({
-              where: { tags: { contains: "popular" }, available: true },
-              take: 3,
-            });
-          } else {
-            dishes = await ctx.db.dish.findMany({
-              where: { tags: { contains: "popular" }, available: true },
-              take: 3,
+        if (groq) {
+          try {
+            const response = await groq.chat.completions.create({
+              model: "llama-3.1-8b-instant",
+              messages: [
+                {
+                  role: "system",
+                  content: "You are BiteBot, a highly knowledgeable food expert and ordering assistant. You MUST enthusiastically answer any question about food (e.g., gluten-free diets, ingredients, recipes, or nutrition) in a friendly, conversational tone (max 3 sentences). Always tie the conversation back to offering our food delivery menu options.",
+                },
+                {
+                  role: "user",
+                  content: input.message,
+                },
+              ],
+              max_tokens: 256,
             });
             replyText =
-              "💬 Got it! I’m still learning, but I can help with ordering and tracking. Here are some favourites to get you started:";
+              response.choices[0]?.message?.content ||
+              "💬 I can answer any question about food! What would you like to know?";
+          } catch (e) {
+            replyText =
+              "💬 Got it! I’m having trouble connecting to my brain right now, but I can help with ordering and tracking! Here are some favourites to get you started:";
           }
+
+          dishes = await ctx.db.dish.findMany({
+            where: { tags: { contains: "popular" }, available: true },
+            take: 3,
+          });
+        } else {
+          dishes = await ctx.db.dish.findMany({
+            where: { tags: { contains: "popular" }, available: true },
+            take: 3,
+          });
+          replyText =
+            "🤔 I can answer questions about the menu, ordering, or tracking your order. (Configure GROQ_API_KEY for advanced food chat!)";
         }
       }
 
